@@ -15,9 +15,11 @@ beautifulsoup4 = "^4.12.2"
 requests = "^2.31.0"
 python-dotenv = "^1.0.0"
 pypdf = "^3.17.1"
-tiktoken = "^0.5.2"
 faiss-cpu = "^1.7.4"
 numpy = "^1.26.3"
+tiktoken = "^0.8.0"
+litellm = "^1.60.8"
+pdf2image = "^1.17.0"
 
 [build-system]
 requires = ["poetry-core"]

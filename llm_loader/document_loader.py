@@ -4,7 +4,7 @@ Document loader module for handling different types of inputs (files and URLs).
 import asyncio
 from pathlib import Path
 import tempfile
-from typing import AsyncIterator, List, Optional, Iterator, Dict, Union
+from typing import AsyncIterator, List, Optional, Iterator, Union
 from base64 import b64encode
 import io
 from multiprocessing import Pool, cpu_count
@@ -12,10 +12,9 @@ from multiprocessing import Pool, cpu_count
 from PIL.Image import Image
 from langchain_community.document_loaders.base import BaseLoader
 from langchain_core.documents import Document
-from langchain_text_splitters import TextSplitter
 from pdf2image import convert_from_path
 from pydantic import BaseModel
-from litellm import completion
+from litellm import completion, validate_environment, supports_vision, check_valid_key
 import requests
 
 
@@ -104,8 +103,22 @@ class ImageProcessor:
 
 class LLMProcessing:
     def __init__(self, model: str = "gemini/gemini-2.0-flash", **kwargs):
+        self._validate_model(model)
         self.model = model
         self.kwargs = kwargs
+
+    @staticmethod
+    def _validate_model(model: str) -> None:
+        """Validate that the model is properly configured for vision tasks."""
+        environment = validate_environment(model=model)
+        if not environment["keys_in_environment"]:
+            raise ValueError(f"Missing environment variables for {model}: {environment}")
+
+        if not supports_vision(model=model):
+            raise ValueError(f"Model '{model}' is not a supported vision model.")
+
+        if not check_valid_key(model=model, api_key=None):
+            raise ValueError(f"Failed to access model '{model}'. Please check your API key and model availability.")
 
     @staticmethod
     def get_chunk_prompt(strategy: str, custom_prompt: Optional[str] = None) -> str:
@@ -160,11 +173,11 @@ class LLMProcessing:
         return documents
 
     def process_document_with_llm(
-        self,
-        file_path: Optional[Union[str, Path]] = None,
-        chunk_strategy: str = 'page',
-        custom_prompt: Optional[str] = None,
-        save_output: bool = False,
+            self,
+            file_path: Optional[Union[str, Path]] = None,
+            chunk_strategy: str = 'page',
+            custom_prompt: Optional[str] = None,
+            save_output: bool = False,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking."""
 
@@ -178,11 +191,11 @@ class LLMProcessing:
         return documents
 
     async def async_process_document_with_llm(
-        self,
-        file_path: Optional[Union[str, Path]] = None,
-        chunk_strategy: str = 'page',
-        custom_prompt: Optional[str] = None,
-        save_output: bool = False,
+            self,
+            file_path: Optional[Union[str, Path]] = None,
+            chunk_strategy: str = 'page',
+            custom_prompt: Optional[str] = None,
+            save_output: bool = False,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking asynchronously."""
         images = ImageProcessor.pdf_to_images(file_path)
@@ -235,14 +248,14 @@ class DocumentLoader(BaseLoader):
     """A flexible document loader that supports multiple input types."""
 
     def __init__(
-        self,
-        file_path: Optional[Union[str, Path]] = None,
-        url: Optional[str] = None,
-        chunk_strategy: str = 'page',
-        custom_prompt: Optional[str] = None,
-        model: str = "gemini/gemini-2.0-flash",
-        save_output: bool = False,
-        **kwargs,
+            self,
+            file_path: Optional[Union[str, Path]] = None,
+            url: Optional[str] = None,
+            chunk_strategy: str = 'page',
+            custom_prompt: Optional[str] = None,
+            model: str = "gemini/gemini-2.0-flash",
+            save_output: bool = False,
+            **kwargs,
     ):
         """Initialize the DocumentLoader with a file path or URL."""
 
@@ -313,7 +326,7 @@ class DocumentLoader(BaseLoader):
         )
         return documents
 
-    def load_and_split(self, text_splitter: Optional[TextSplitter] = None) -> List[Document]:
+    def load_and_split(self, text_splitter: Optional = None) -> List[Document]:
         """Load Documents and split into chunks using LLM-based OCR processing."""
         documents = self.llm_processor.process_document_with_llm(
             self.file_path, self.chunk_strategy, self.custom_prompt, save_output=self.save_output
