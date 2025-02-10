@@ -57,15 +57,19 @@ class ImageProcessor:
     @staticmethod
     def pdf_to_images(file_path: Optional[Union[str, Path]] = None) -> list[Image]:
         """Convert PDF pages to images all at once for better performance."""
-
-        return convert_from_path(
-            file_path,
-            dpi=300,
-            fmt='PNG',
-            size=(None, 1056),
-            thread_count=cpu_count(),  # Maximize thread usage
-            use_pdftocairo=True,
-        )
+        try:
+            images = convert_from_path(
+                file_path,
+                dpi=300,
+                fmt='PNG',
+                size=(None, 1056),
+                thread_count=cpu_count(),  # Maximize thread usage
+                use_pdftocairo=True,
+            )
+            return images
+        finally:
+            if file_path and Path(file_path).exists():
+                Path(file_path).unlink()
 
     @staticmethod
     def image_to_base64(image: Image) -> str:
