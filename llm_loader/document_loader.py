@@ -38,7 +38,13 @@ def save_output_file(documents: List[Document], file_path: Path, save_output: bo
     output_dir = input_file.parent / input_file.stem
     output_dir.mkdir(exist_ok=True)
 
-    chunks_data = [{"content": doc.page_content, "metadata": doc.metadata} for doc in documents]
+    chunks_data = [
+        {
+            "content": doc.page_content,
+            "metadata": {**doc.metadata, "source": str(doc.metadata["source"]) if "source" in doc.metadata else None},
+        }
+        for doc in documents
+    ]
 
     chunks_file = output_dir / f"{input_file.stem}_chunks.json"
     with open(chunks_file, "w", encoding="utf-8") as f:
@@ -58,16 +64,17 @@ be embedded and used in a RAG pipeline.
 """
 
 DEFAULT_PAGE_CHUNK_PROMPT = """OCR the following page into Markdown. Tables should be formatted as HTML.
-Do not surround your output with triple backticks. The contents of the page should be returned as a single chunk.
+Do not surround your output with triple backticks. The contents of the page should be returned as a single chunk. 
+Also return the semantic theme of the page.
 
-Images in the document should be properly discribed in details such that an LLM can understand the image and answer questions about the image without seeing the image.
+Images in the document should be properly discribed in details such that an LLM can understand the image and answer 
+questions about the image without seeing the image.
 The description should be returned as a part of the page content.
 """
 
 
 class Chunk(BaseModel):
     content: str
-    page: Optional[int] = None
     theme: Optional[str] = None
 
 
@@ -147,12 +154,7 @@ class LLMProcessing:
                 "role": "user",
                 "content": [
                     {"type": "text", "text": "Process this image:"},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{base64_image}"
-                        }
-                    },
+                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{base64_image}"}},
                 ],
             },
         ]
@@ -179,11 +181,11 @@ class LLMProcessing:
         return documents
 
     def process_document_with_llm(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
-            save_output: bool = False,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        save_output: bool = False,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking."""
 
@@ -198,11 +200,11 @@ class LLMProcessing:
         return documents
 
     async def async_process_document_with_llm(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
-            save_output: bool = False,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        save_output: bool = False,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking asynchronously."""
         images = ImageProcessor.pdf_to_images(file_path)
@@ -255,14 +257,14 @@ class DocumentLoader(BaseLoader):
     """A flexible document loader that supports multiple input types."""
 
     def __init__(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            url: Optional[str] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
-            model: str = "gemini/gemini-2.0-flash",
-            save_output: bool = False,
-            **kwargs,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        url: Optional[str] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        model: str = "gemini/gemini-2.0-flash",
+        save_output: bool = False,
+        **kwargs,
     ):
         """Initialize the DocumentLoader with a file path or URL."""
 
