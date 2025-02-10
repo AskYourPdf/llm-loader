@@ -7,14 +7,14 @@ import tempfile
 from typing import AsyncIterator, List, Optional, Iterator, Union
 from base64 import b64encode
 import io
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count
 
 from PIL.Image import Image
 from langchain_community.document_loaders.base import BaseLoader
 from langchain_core.documents import Document
 from pdf2image import convert_from_path
 from pydantic import BaseModel
-from litellm import completion, validate_environment, supports_vision, check_valid_key
+from litellm import completion, validate_environment, supports_vision, check_valid_key, acompletion
 import requests
 
 
@@ -44,8 +44,9 @@ def save_output_file(documents: List[Document], file_path: Path, save_output: bo
     with open(chunks_file, "w", encoding="utf-8") as f:
         json.dump(chunks_data, f, indent=2, ensure_ascii=False)
 
-    output_file = output_dir / input_file.name
-    shutil.copy2(input_file, output_file)
+    if input_file.exists():
+        output_file = output_dir / input_file.name
+        shutil.copy2(input_file, output_file)
 
 
 DEFAULT_CHUNK_PROMPT = """OCR the following page into Markdown. Tables should be formatted as HTML.
@@ -146,7 +147,12 @@ class LLMProcessing:
                 "role": "user",
                 "content": [
                     {"type": "text", "text": "Process this image:"},
-                    {"type": "image_url", "image_url": f"data:image/png;base64,{base64_image}"},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{base64_image}"
+                        }
+                    },
                 ],
             },
         ]
@@ -181,12 +187,13 @@ class LLMProcessing:
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking."""
 
-        images = ImageProcessor.pdf_to_images(file_path)
-        prompt = self.get_chunk_prompt(chunk_strategy, custom_prompt)
-        with Pool(processes=min(cpu_count(), len(images))) as pool:
-            results = pool.starmap(self.process_with_llm, [(img, prompt) for img in images])
+        async def process_images():
+            images = ImageProcessor.pdf_to_images(file_path)
+            prompt = self.get_chunk_prompt(chunk_strategy, custom_prompt)
+            return await asyncio.gather(*[self.async_process_with_llm(img, prompt) for img in images])
 
-        documents = self.serialize_response(results, file_path)
+        results = asyncio.run(process_images())
+        documents = self.serialize_response(list(results), file_path)
         save_output_file(documents, file_path, save_output)
         return documents
 
@@ -201,15 +208,15 @@ class LLMProcessing:
         images = ImageProcessor.pdf_to_images(file_path)
         prompt = self.get_chunk_prompt(chunk_strategy, custom_prompt)
         results = list(await asyncio.gather(*[self.async_process_with_llm(img, prompt) for img in images]))
-        documents = self.serialize_response(results, file_path)
+        documents = self.serialize_response(list(results), file_path)
         save_output_file(documents, file_path, save_output)
         return documents
 
-    def process_with_llm(self, page_as_image: Image, prompt: str) -> dict:
-        """Convert image to base64 and chunk the image with LLM."""
+    async def async_process_with_llm(self, page_as_image: Image, prompt: str) -> dict:
+        """Convert image to base64 and chunk the image with LLM asynchronously."""
         messages = self.prepare_llm_messages(page_as_image, prompt)
         try:
-            response = completion(
+            response = await acompletion(
                 model=self.model,
                 messages=messages,
                 response_format=OCRResponse,
@@ -224,11 +231,11 @@ class LLMProcessing:
             print(f"Error in LLM processing: {e}")
             return {"chunks": [{"content": None, "page": None, "theme": None}]}
 
-    async def async_process_with_llm(self, page_as_image: Image, prompt: str) -> dict:
-        """Convert image to base64 and chunk the image with LLM asynchronously."""
+    def process_with_llm(self, page_as_image: Image, prompt: str) -> dict:
+        """Convert image to base64 and chunk the image with LLM."""
         messages = self.prepare_llm_messages(page_as_image, prompt)
         try:
-            response = await completion(
+            response = completion(
                 model=self.model,
                 messages=messages,
                 response_format=OCRResponse,
