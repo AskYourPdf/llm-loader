@@ -27,6 +27,28 @@ def is_pdf(url: str, response: requests.Response) -> bool:
     ]
 
 
+def save_output_file(documents: List[Document], file_path: Path, save_output: bool) -> None:
+    """Save the chunks and input file to a folder."""
+    import json
+    import shutil
+
+    if not save_output:
+        return
+
+    input_file = Path(file_path)
+    output_dir = input_file.parent / input_file.stem
+    output_dir.mkdir(exist_ok=True)
+
+    chunks_data = [{"content": doc.page_content, "metadata": doc.metadata} for doc in documents]
+
+    chunks_file = output_dir / f"{input_file.stem}_chunks.json"
+    with open(chunks_file, "w", encoding="utf-8") as f:
+        json.dump(chunks_data, f, indent=2, ensure_ascii=False)
+
+    output_file = output_dir / input_file.name
+    shutil.copy2(input_file, output_file)
+
+
 DEFAULT_CHUNK_PROMPT = """OCR the following page into Markdown. Tables should be formatted as HTML.
 Do not surround your output with triple backticks.
 
@@ -138,10 +160,11 @@ class LLMProcessing:
         return documents
 
     def process_document_with_llm(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        save_output: bool = False,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking."""
 
@@ -150,19 +173,24 @@ class LLMProcessing:
         with Pool(processes=min(cpu_count(), len(images))) as pool:
             results = pool.starmap(self.process_with_llm, [(img, prompt) for img in images])
 
-        return self.serialize_response(results, file_path)
+        documents = self.serialize_response(results, file_path)
+        save_output_file(documents, file_path, save_output)
+        return documents
 
     async def async_process_document_with_llm(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        save_output: bool = False,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking asynchronously."""
         images = ImageProcessor.pdf_to_images(file_path)
         prompt = self.get_chunk_prompt(chunk_strategy, custom_prompt)
         results = list(await asyncio.gather(*[self.async_process_with_llm(img, prompt) for img in images]))
-        return self.serialize_response(results, file_path)
+        documents = self.serialize_response(results, file_path)
+        save_output_file(documents, file_path, save_output)
+        return documents
 
     def process_with_llm(self, page_as_image: Image, prompt: str) -> dict:
         """Convert image to base64 and chunk the image with LLM."""
@@ -207,13 +235,14 @@ class DocumentLoader(BaseLoader):
     """A flexible document loader that supports multiple input types."""
 
     def __init__(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            url: Optional[str] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
-            model: str = "gemini/gemini-2.0-flash",
-            **kwargs,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        url: Optional[str] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        model: str = "gemini/gemini-2.0-flash",
+        save_output: bool = False,
+        **kwargs,
     ):
         """Initialize the DocumentLoader with a file path or URL."""
 
@@ -227,6 +256,7 @@ class DocumentLoader(BaseLoader):
         """
         self.chunk_strategy = chunk_strategy
         self.custom_prompt = custom_prompt
+        self.save_output = save_output
         self.llm_processor = LLMProcessing(model=model, **kwargs)
 
         if file_path and url:
@@ -264,7 +294,9 @@ class DocumentLoader(BaseLoader):
 
     async def aload(self) -> list[Document]:
         """Load Documents and split into chunks using LLM-based OCR processing. async version"""
-        return await self.llm_processor.async_process_document_with_llm(self.file_path, chunk_strategy="page")
+        return await self.llm_processor.async_process_document_with_llm(
+            self.file_path, chunk_strategy="page", save_output=self.save_output
+        )
 
     def load(self) -> List[Document]:
         """
@@ -276,48 +308,59 @@ class DocumentLoader(BaseLoader):
         Returns:
             List of Document objects without chunked pages
         """
-        return self.llm_processor.process_document_with_llm(self.file_path, chunk_strategy="page")
+        documents = self.llm_processor.process_document_with_llm(
+            self.file_path, chunk_strategy="page", save_output=self.save_output
+        )
+        return documents
 
     def load_and_split(self, text_splitter: Optional[TextSplitter] = None) -> List[Document]:
         """Load Documents and split into chunks using LLM-based OCR processing."""
-        return self.llm_processor.process_document_with_llm(self.file_path, self.chunk_strategy, self.custom_prompt)
+        documents = self.llm_processor.process_document_with_llm(
+            self.file_path, self.chunk_strategy, self.custom_prompt, save_output=self.save_output
+        )
+        return documents
+
+    def _create_document(self, chunk: dict, page_num: int) -> Document:
+        """Helper method to create a Document object from a chunk."""
+        return Document(
+            page_content=chunk['content'],
+            metadata={
+                'page': page_num,
+                'semantic_theme': chunk.get('theme'),
+                'source': self.file_path,
+            },
+        )
 
     def lazy_load(self) -> Iterator[Document]:
         """Load Documents lazily, processing and yielding one page at a time."""
         images = ImageProcessor.pdf_to_images(self.file_path)
         prompt = self.llm_processor.get_chunk_prompt('page')
 
+        documents = []
         for page_num, image in enumerate(images):
             result = self.llm_processor.process_with_llm(image, prompt)
             for chunk in result['chunks']:
                 if chunk.get('content') is None:
                     continue
+                doc = self._create_document(chunk, page_num)
+                documents.append(doc)
+                yield doc
 
-                yield Document(
-                    page_content=chunk['content'],
-                    metadata={
-                        'page': page_num,
-                        'semantic_theme': chunk.get('theme'),
-                        'source': self.file_path,
-                    },
-                )
+        save_output_file(documents, self.file_path, self.save_output)
 
     async def alazy_load(self) -> AsyncIterator[Document]:
         """Load Documents lazily and asynchronously, processing and yielding one page at a time."""
         images = ImageProcessor.pdf_to_images(self.file_path)
         prompt = self.llm_processor.get_chunk_prompt('page')
 
+        documents = []
         for page_num, image in enumerate(images):
             result = await self.llm_processor.async_process_with_llm(image, prompt)
             for chunk in result['chunks']:
                 if chunk.get('content') is None:
                     continue
+                doc = self._create_document(chunk, page_num)
+                documents.append(doc)
+                yield doc
 
-                yield Document(
-                    page_content=chunk['content'],
-                    metadata={
-                        'page': page_num,
-                        'semantic_theme': chunk.get('theme'),
-                        'source': self.file_path,
-                    },
-                )
+        save_output_file(documents, self.file_path, self.save_output)
