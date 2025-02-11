@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from litellm import completion, validate_environment, supports_vision, check_valid_key, acompletion
 import requests
 import shutil
+import json
 
 
 def is_pdf(url: str, response: requests.Response) -> bool:
@@ -27,13 +28,22 @@ def is_pdf(url: str, response: requests.Response) -> bool:
     ]
 
 
-def save_output_file(documents: List[Document], output_dir: Path) -> None:
-    print(f"Saving output to {output_dir}")
-    """Save the chunks and input file to a folder."""
-    import json
+def get_project_root() -> Path:
+    """Get the project root directory."""
+    current_file = Path(__file__).resolve()
+    for parent in [current_file, *current_file.parents]:
+        if any((parent / f).exists() for f in ['pyproject.toml', 'setup.py', '.git', 'requirements.txt', 'README.md']):
+            return parent
+    return Path.cwd()
 
+
+def save_output_file(documents: List[Document], output_dir: Path) -> None:
+    """Save the chunks and input file to a folder."""
     if not output_dir:
         return
+
+    if not output_dir.is_absolute():
+        output_dir = get_project_root() / output_dir
 
     output_dir.mkdir(exist_ok=True)
     chunks_data = [
@@ -45,7 +55,6 @@ def save_output_file(documents: List[Document], output_dir: Path) -> None:
     ]
 
     chunks_file = output_dir / f"{output_dir.stem}_chunks.json"
-    print(f"Saving chunks to {chunks_file}")
     with open(chunks_file, "w", encoding="utf-8") as f:
         json.dump(chunks_data, f, indent=2, ensure_ascii=False)
 
@@ -290,11 +299,13 @@ class DocumentLoader(BaseLoader):
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        output_dir = file_path.parent / file_path.stem
         if save_output:
+            output_dir = get_project_root() / file_path.stem
             output_dir.mkdir(exist_ok=True)
             output_file = output_dir / file_path.name
             shutil.copy2(file_path, output_file)
+        else:
+            output_dir = None
 
         return file_path, output_dir
 
@@ -314,7 +325,7 @@ class DocumentLoader(BaseLoader):
             if save_output:
                 url_filename = url.split('/')[-1] or 'output'
                 url_filename = url_filename if ".pdf" in url_filename else url_filename + ".pdf"
-                output_dir = Path.cwd() / Path(url_filename).stem
+                output_dir = get_project_root() / Path(url_filename).stem
                 output_dir.mkdir(exist_ok=True)
                 output_file = output_dir / url_filename
                 shutil.copy2(temp_path, output_file)
