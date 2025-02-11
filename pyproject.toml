@@ -26,4 +26,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-pre-install = "llm_loader.install_dependencies:install_poppler"
+pre-install = "llm_loader.script.install_dependencies:install_poppler"

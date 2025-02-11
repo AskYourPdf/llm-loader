@@ -9,18 +9,6 @@ A flexible RAG (Retrieval-Augmented Generation) package supporting multiple LLMs
 - RAG (Retrieval-Augmented Generation) implementation
 - Flexible document type support
 
-## System Requirements
-
-The package will automatically check for required system dependencies on import. For PDF processing functionality, you need:
-
-- **Poppler**: The package will check if it's installed and provide installation instructions if it's missing.
-  - On macOS: `brew install poppler`
-  - On Ubuntu/Debian: `apt-get install poppler-utils`
-  - On CentOS/RHEL: `yum install poppler-utils`
-  - On Windows: Download and install from [poppler releases](http://blog.alivate.com.au/poppler-windows/)
-
-If poppler is not found, the package will still work but PDF processing capabilities will be limited.
-
 ## Installation
 
 You can install LLMLoader using pip:
@@ -45,9 +33,6 @@ loader = LLMLoader()
 
 # Load and process documents
 documents = loader.load_documents("path/to/your/documents")
-
-# Use the processed documents for RAG
-results = loader.process(documents)
 ```
 
 ## Documentation
