@@ -62,9 +62,13 @@ def save_output_file(documents: List[Document], output_dir: Path) -> None:
 DEFAULT_CHUNK_PROMPT = """OCR the following page into Markdown. Tables should be formatted as HTML.
 Do not surround your output with triple backticks.
 
-Chunk the document into sections of roughly 250 - 1000 words. Our goal is
+Chunk the document into sections of roughly 250 - 1500 words. Our goal is
 to identify parts of the page with same semantic theme. These chunks will
 be embedded and used in a RAG pipeline.
+
+Images in the document should be properly described in details such that an LLM can understand the
+image and answer questions about the image without seeing the image.
+The image description should be returned as a chunk too.
 """
 
 DEFAULT_PAGE_CHUNK_PROMPT = """OCR the following page into Markdown. Tables should be formatted as HTML.
@@ -266,6 +270,7 @@ class DocumentLoader(BaseLoader):
         custom_prompt: Optional[str] = None,
         model: str = "gemini/gemini-2.0-flash",
         save_output: bool = False,
+        output_dir: Optional[Union[str, Path]] = None,
         **kwargs,
     ):
         """Initialize the DocumentLoader with a file path or URL."""
@@ -276,6 +281,8 @@ class DocumentLoader(BaseLoader):
             url: URL to load the document from
             chunk_strategy: Strategy to use for chunking the document page, contextual or custom
             custom_prompt: Custom prompt to use for chunking the document, this will override the default prompt
+            save_output: Whether to save the output files
+            output_dir: Directory to save output files (if save_output is True)
             **kwargs: Additional arguments that will be passed to the litellm.completion method. Refer: https://docs.litellm.ai/docs/completion/input and https://docs.litellm.ai/docs/providers
         """
         self.chunk_strategy = chunk_strategy
@@ -289,28 +296,26 @@ class DocumentLoader(BaseLoader):
             raise ValueError("Either file_path or url must be provided.")
 
         self.file_path, self.output_dir = (
-            self._load_from_path(file_path, save_output) if file_path else self._load_from_url(url, save_output)
+            self._load_from_path(file_path, save_output, output_dir) if file_path else self._load_from_url(url, save_output, output_dir)
         )
 
     @staticmethod
-    def _load_from_path(file_path: Union[str, Path], save_output: bool = False) -> Tuple[Path, Optional[Path]]:
+    def _load_from_path(file_path: Union[str, Path], save_output: bool = False, output_dir: Optional[Union[str, Path]] = None) -> Tuple[Path, Optional[Path]]:
         """Load documents from a file path."""
         file_path = Path(file_path)
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        if save_output:
-            output_dir = get_project_root() / file_path.stem
-            output_dir.mkdir(exist_ok=True)
+        if save_output or output_dir:
+            output_dir = Path(output_dir) if output_dir else get_project_root() / file_path.stem
+            output_dir.mkdir(parents=True, exist_ok=True)
             output_file = output_dir / file_path.name
             shutil.copy2(file_path, output_file)
-        else:
-            output_dir = None
 
         return file_path, output_dir
 
     @staticmethod
-    def _load_from_url(url: str, save_output: bool = False) -> Tuple[Path, Optional[Path]]:
+    def _load_from_url(url: str, save_output: bool = False, output_dir: Optional[Union[str, Path]] = None) -> Tuple[Path, Optional[Path]]:
         """Load documents from a URL."""
         response = requests.get(url)
         response.raise_for_status()
@@ -321,12 +326,11 @@ class DocumentLoader(BaseLoader):
                 temp_path = Path(temp_file.name)
                 temp_file.write(response.content)
 
-            output_dir = None
-            if save_output:
+            if save_output or output_dir:
                 url_filename = url.split('/')[-1] or 'output'
                 url_filename = url_filename if ".pdf" in url_filename else url_filename + ".pdf"
-                output_dir = get_project_root() / Path(url_filename).stem
-                output_dir.mkdir(exist_ok=True)
+                output_dir = Path(output_dir) if output_dir else get_project_root() / Path(url_filename).stem
+                output_dir.mkdir(parents=True, exist_ok=True)
                 output_file = output_dir / url_filename
                 shutil.copy2(temp_path, output_file)
 
