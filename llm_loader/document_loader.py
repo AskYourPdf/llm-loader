@@ -52,7 +52,7 @@ def save_output_file(documents: List[Document], file_path: Path, save_output: bo
 
     if input_file.exists():
         output_file = output_dir / input_file.name
-        shutil.copy2(input_file, output_file)
+        shutil.move(input_file, output_file)
 
 
 DEFAULT_CHUNK_PROMPT = """OCR the following page into Markdown. Tables should be formatted as HTML.
@@ -86,20 +86,16 @@ class ImageProcessor:
     @staticmethod
     def pdf_to_images(file_path: Optional[Union[str, Path]] = None) -> list[Image]:
         """Convert PDF pages to images all at once for better performance."""
-        try:
-            images = convert_from_path(
-                file_path,
-                dpi=300,
-                fmt='PNG',
-                size=(None, 1056),
-                thread_count=cpu_count(),  # Maximize thread usage
-                use_pdftocairo=True,
+        images = convert_from_path(
+            file_path,
+            dpi=300,
+            fmt='PNG',
+            size=(None, 1056),
+            thread_count=cpu_count(),
+            use_pdftocairo=True,
             )
-            return images
-        finally:
-            if file_path and Path(file_path).exists():
-                Path(file_path).unlink()
-
+        return images
+    
     @staticmethod
     def image_to_base64(image: Image) -> str:
         """Convert an image to a base64 string."""
@@ -111,21 +107,23 @@ class ImageProcessor:
 
 class LLMProcessing:
     def __init__(self, model: str = "gemini/gemini-2.0-flash", **kwargs):
-        self._validate_model(model)
+        self._validate_model(model, **kwargs)
         self.model = model
         self.kwargs = kwargs
 
     @staticmethod
-    def _validate_model(model: str) -> None:
+    def _validate_model(model: str, **kwargs) -> None:
         """Validate that the model is properly configured for vision tasks."""
         environment = validate_environment(model=model)
-        if not environment["keys_in_environment"]:
+        api_key = kwargs.get("api_key")
+
+        if not environment["keys_in_environment"] and not api_key:
             raise ValueError(f"Missing environment variables for {model}: {environment}")
 
         if not supports_vision(model=model):
             raise ValueError(f"Model '{model}' is not a supported vision model.")
 
-        if not check_valid_key(model=model, api_key=None):
+        if not check_valid_key(model=model, api_key=api_key):
             raise ValueError(f"Failed to access model '{model}'. Please check your API key and model availability.")
 
     @staticmethod
@@ -189,12 +187,12 @@ class LLMProcessing:
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking."""
 
-        async def process_images():
+        async def process_pdf():
             images = ImageProcessor.pdf_to_images(file_path)
             prompt = self.get_chunk_prompt(chunk_strategy, custom_prompt)
             return await asyncio.gather(*[self.async_process_with_llm(img, prompt) for img in images])
 
-        results = asyncio.run(process_images())
+        results = asyncio.run(process_pdf())
         documents = self.serialize_response(list(results), file_path)
         save_output_file(documents, file_path, save_output)
         return documents
