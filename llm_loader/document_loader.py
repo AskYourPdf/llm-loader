@@ -13,81 +13,13 @@ from PIL.Image import Image
 from langchain_community.document_loaders.base import BaseLoader
 from langchain_core.documents import Document
 from pdf2image import convert_from_path
-from pydantic import BaseModel
 from litellm import completion, validate_environment, supports_vision, check_valid_key, acompletion
 import requests
 import shutil
-import json
 
-
-def is_pdf(url: str, response: requests.Response) -> bool:
-    """Check if the URL points to a PDF file."""
-    return url.lower().endswith('.pdf') or response.headers.get('Content-Type', '').lower() in [
-        'application/pdf',
-        'binary/octet-stream',
-    ]
-
-
-def get_project_root() -> Path:
-    """Get the project root directory."""
-    current_file = Path(__file__).resolve()
-    for parent in [current_file, *current_file.parents]:
-        if any((parent / f).exists() for f in ['pyproject.toml', 'setup.py', '.git', 'requirements.txt', 'README.md']):
-            return parent
-    return Path.cwd()
-
-
-def save_output_file(documents: List[Document], output_dir: Path) -> None:
-    """Save the chunks and input file to a folder."""
-    if not output_dir:
-        return
-
-    if not output_dir.is_absolute():
-        output_dir = get_project_root() / output_dir
-
-    output_dir.mkdir(exist_ok=True)
-    chunks_data = [
-        {
-            "content": doc.page_content,
-            "metadata": {**doc.metadata, "source": str(doc.metadata["source"]) if "source" in doc.metadata else None},
-        }
-        for doc in documents
-    ]
-
-    chunks_file = output_dir / f"{output_dir.stem}_chunks.json"
-    with open(chunks_file, "w", encoding="utf-8") as f:
-        json.dump(chunks_data, f, indent=2, ensure_ascii=False)
-
-
-DEFAULT_CHUNK_PROMPT = """OCR the following page into Markdown. Tables should be formatted as HTML.
-Do not surround your output with triple backticks.
-
-Chunk the document into sections of roughly 250 - 1500 words. Our goal is
-to identify parts of the page with same semantic theme. These chunks will
-be embedded and used in a RAG pipeline.
-
-Images in the document should be properly described in details such that an LLM can understand the
-image and answer questions about the image without seeing the image.
-The image description should be returned as a chunk too.
-"""
-
-DEFAULT_PAGE_CHUNK_PROMPT = """OCR the following page into Markdown. Tables should be formatted as HTML.
-Do not surround your output with triple backticks. The contents of the page should be returned as a single chunk.
-Also return the semantic theme of the page.
-
-Images in the document should be properly discribed in details such that an LLM can understand the image and answer
-questions about the image without seeing the image.
-The description should be returned as a part of the page content.
-"""
-
-
-class Chunk(BaseModel):
-    content: str
-    theme: Optional[str] = None
-
-
-class OCRResponse(BaseModel):
-    chunks: List[Chunk]
+from llm_loader.prompts import DEFAULT_PAGE_CHUNK_PROMPT, DEFAULT_CHUNK_PROMPT
+from llm_loader.schema import OCRResponse
+from llm_loader.utils import save_output_file, get_project_root, is_pdf
 
 
 class ImageProcessor:
@@ -187,11 +119,11 @@ class LLMProcessing:
         return documents
 
     def process_document_with_llm(
-        self,
-        file_path: Optional[Union[str, Path]] = None,
-        chunk_strategy: str = 'page',
-        custom_prompt: Optional[str] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+            self,
+            file_path: Optional[Union[str, Path]] = None,
+            chunk_strategy: str = 'page',
+            custom_prompt: Optional[str] = None,
+            output_dir: Optional[Union[str, Path]] = None,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking."""
 
@@ -206,11 +138,11 @@ class LLMProcessing:
         return documents
 
     async def async_process_document_with_llm(
-        self,
-        file_path: Optional[Union[str, Path]] = None,
-        chunk_strategy: str = 'page',
-        custom_prompt: Optional[str] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+            self,
+            file_path: Optional[Union[str, Path]] = None,
+            chunk_strategy: str = 'page',
+            custom_prompt: Optional[str] = None,
+            output_dir: Optional[Union[str, Path]] = None,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking asynchronously."""
         images = ImageProcessor.pdf_to_images(file_path)
@@ -263,15 +195,15 @@ class DocumentLoader(BaseLoader):
     """A flexible document loader that supports multiple input types."""
 
     def __init__(
-        self,
-        file_path: Optional[Union[str, Path]] = None,
-        url: Optional[str] = None,
-        chunk_strategy: str = 'page',
-        custom_prompt: Optional[str] = None,
-        model: str = "gemini/gemini-2.0-flash",
-        save_output: bool = False,
-        output_dir: Optional[Union[str, Path]] = None,
-        **kwargs,
+            self,
+            file_path: Optional[Union[str, Path]] = None,
+            url: Optional[str] = None,
+            chunk_strategy: str = 'page',
+            custom_prompt: Optional[str] = None,
+            model: str = "gemini/gemini-2.0-flash",
+            save_output: bool = False,
+            output_dir: Optional[Union[str, Path]] = None,
+            **kwargs,
     ):
         """Initialize the DocumentLoader with a file path or URL."""
 
@@ -296,11 +228,14 @@ class DocumentLoader(BaseLoader):
             raise ValueError("Either file_path or url must be provided.")
 
         self.file_path, self.output_dir = (
-            self._load_from_path(file_path, save_output, output_dir) if file_path else self._load_from_url(url, save_output, output_dir)
+            self._load_from_path(file_path, save_output, output_dir) if file_path else self._load_from_url(url,
+                                                                                                           save_output,
+                                                                                                           output_dir)
         )
 
     @staticmethod
-    def _load_from_path(file_path: Union[str, Path], save_output: bool = False, output_dir: Optional[Union[str, Path]] = None) -> Tuple[Path, Optional[Path]]:
+    def _load_from_path(file_path: Union[str, Path], save_output: bool = False,
+                        output_dir: Optional[Union[str, Path]] = None) -> Tuple[Path, Optional[Path]]:
         """Load documents from a file path."""
         file_path = Path(file_path)
         if not file_path.exists():
@@ -315,7 +250,8 @@ class DocumentLoader(BaseLoader):
         return file_path, output_dir
 
     @staticmethod
-    def _load_from_url(url: str, save_output: bool = False, output_dir: Optional[Union[str, Path]] = None) -> Tuple[Path, Optional[Path]]:
+    def _load_from_url(url: str, save_output: bool = False, output_dir: Optional[Union[str, Path]] = None) -> Tuple[
+        Path, Optional[Path]]:
         """Load documents from a URL."""
         response = requests.get(url)
         response.raise_for_status()
