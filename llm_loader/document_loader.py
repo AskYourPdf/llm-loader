@@ -191,7 +191,7 @@ class LLMProcessing:
             return {"chunks": [{"content": None, "page": None, "theme": None}]}
 
 
-class DocumentLoader(BaseLoader):
+class LLMLoader(BaseLoader):
     """A flexible document loader that supports multiple input types."""
 
     def __init__(
