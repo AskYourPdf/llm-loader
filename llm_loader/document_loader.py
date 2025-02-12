@@ -15,11 +15,10 @@ from langchain_core.documents import Document
 from pdf2image import convert_from_path
 from litellm import completion, validate_environment, supports_vision, check_valid_key, acompletion
 import requests
-import shutil
 
 from llm_loader.prompts import DEFAULT_PAGE_CHUNK_PROMPT, DEFAULT_CHUNK_PROMPT
 from llm_loader.schema import OCRResponse
-from llm_loader.utils import save_output_file, get_project_root, is_pdf
+from llm_loader.utils import copy_file, save_output_file, get_project_root, is_pdf
 
 
 class ImageProcessor:
@@ -279,7 +278,7 @@ class LLMLoader(BaseLoader):
             output_dir = Path(output_dir) if output_dir else get_project_root() / file_path.stem
             output_dir.mkdir(parents=True, exist_ok=True)
             output_file = output_dir / file_path.name
-            shutil.copy2(file_path, output_file)
+            copy_file(file_path, output_file)
 
         return file_path, output_dir
 
@@ -303,7 +302,7 @@ class LLMLoader(BaseLoader):
                 output_dir = Path(output_dir) if output_dir else get_project_root() / Path(url_filename).stem
                 output_dir.mkdir(parents=True, exist_ok=True)
                 output_file = output_dir / url_filename
-                shutil.copy2(temp_path, output_file)
+                copy_file(temp_path, output_file)
 
             return temp_path, output_dir
         else:

@@ -1,8 +1,10 @@
 from pathlib import Path
+import shutil
 from typing import List
 
 import requests
 from langchain_core.documents import Document
+import json
 
 
 def is_pdf(url: str, response: requests.Response) -> bool:
@@ -42,3 +44,11 @@ def save_output_file(documents: List[Document], output_dir: Path) -> None:
     chunks_file = output_dir / f"{output_dir.stem}_chunks.json"
     with open(chunks_file, "w", encoding="utf-8") as f:
         json.dump(chunks_data, f, indent=2, ensure_ascii=False)
+
+
+def copy_file(file_path: Path, output_file: Path) -> None:
+    """Copy the file to the output directory."""
+    try:
+        shutil.copy2(file_path, output_file)
+    except shutil.SameFileError:
+        pass
