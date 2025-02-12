@@ -119,11 +119,11 @@ class LLMProcessing:
         return documents
 
     def process_document_with_llm(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
-            output_dir: Optional[Union[str, Path]] = None,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        output_dir: Optional[Union[str, Path]] = None,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking."""
 
@@ -138,11 +138,11 @@ class LLMProcessing:
         return documents
 
     async def async_process_document_with_llm(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
-            output_dir: Optional[Union[str, Path]] = None,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        output_dir: Optional[Union[str, Path]] = None,
     ) -> List[Document]:
         """Process a document with LLM for OCR and chunking asynchronously."""
         images = ImageProcessor.pdf_to_images(file_path)
@@ -195,15 +195,15 @@ class LLMLoader(BaseLoader):
     """A flexible document loader that supports multiple input types."""
 
     def __init__(
-            self,
-            file_path: Optional[Union[str, Path]] = None,
-            url: Optional[str] = None,
-            chunk_strategy: str = 'page',
-            custom_prompt: Optional[str] = None,
-            model: str = "gemini/gemini-2.0-flash",
-            save_output: bool = False,
-            output_dir: Optional[Union[str, Path]] = None,
-            **kwargs,
+        self,
+        file_path: Optional[Union[str, Path]] = None,
+        url: Optional[str] = None,
+        chunk_strategy: str = 'page',
+        custom_prompt: Optional[str] = None,
+        model: str = "gemini/gemini-2.0-flash",
+        save_output: bool = False,
+        output_dir: Optional[Union[str, Path]] = None,
+        **kwargs,
     ):
         """Initialize the DocumentLoader with a file path or URL."""
 
@@ -215,7 +215,8 @@ class LLMLoader(BaseLoader):
             custom_prompt: Custom prompt to use for chunking the document, this will override the default prompt
             save_output: Whether to save the output files
             output_dir: Directory to save output files (if save_output is True)
-            **kwargs: Additional arguments that will be passed to the litellm.completion method. Refer: https://docs.litellm.ai/docs/completion/input and https://docs.litellm.ai/docs/providers
+            **kwargs: Additional arguments that will be passed to the litellm.completion method.
+            Refer: https://docs.litellm.ai/docs/completion/input and https://docs.litellm.ai/docs/providers
         """
         self.chunk_strategy = chunk_strategy
         self.custom_prompt = custom_prompt
@@ -228,14 +229,15 @@ class LLMLoader(BaseLoader):
             raise ValueError("Either file_path or url must be provided.")
 
         self.file_path, self.output_dir = (
-            self._load_from_path(file_path, save_output, output_dir) if file_path else self._load_from_url(url,
-                                                                                                           save_output,
-                                                                                                           output_dir)
+            self._load_from_path(file_path, save_output, output_dir)
+            if file_path
+            else self._load_from_url(url, save_output, output_dir)
         )
 
     @staticmethod
-    def _load_from_path(file_path: Union[str, Path], save_output: bool = False,
-                        output_dir: Optional[Union[str, Path]] = None) -> Tuple[Path, Optional[Path]]:
+    def _load_from_path(
+        file_path: Union[str, Path], save_output: bool = False, output_dir: Optional[Union[str, Path]] = None
+    ) -> Tuple[Path, Optional[Path]]:
         """Load documents from a file path."""
         file_path = Path(file_path)
         if not file_path.exists():
@@ -250,8 +252,9 @@ class LLMLoader(BaseLoader):
         return file_path, output_dir
 
     @staticmethod
-    def _load_from_url(url: str, save_output: bool = False, output_dir: Optional[Union[str, Path]] = None) -> Tuple[
-        Path, Optional[Path]]:
+    def _load_from_url(
+        url: str, save_output: bool = False, output_dir: Optional[Union[str, Path]] = None
+    ) -> Tuple[Path, Optional[Path]]:
         """Load documents from a URL."""
         response = requests.get(url)
         response.raise_for_status()
