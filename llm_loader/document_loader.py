@@ -25,7 +25,14 @@ from llm_loader.utils import save_output_file, get_project_root, is_pdf
 class ImageProcessor:
     @staticmethod
     def pdf_to_images(file_path: Optional[Union[str, Path]] = None) -> list[Image]:
-        """Convert PDF pages to images all at once for better performance."""
+        """Convert PDF pages to images all at once for better performance.
+        
+        Args:
+            file_path: Path to the PDF file to convert
+            
+        Returns:
+            list[Image]: List of PIL Image objects, one per PDF page
+        """
         images = convert_from_path(
             file_path,
             dpi=300,
@@ -38,7 +45,14 @@ class ImageProcessor:
 
     @staticmethod
     def image_to_base64(image: Image) -> str:
-        """Convert an image to a base64 string."""
+        """Convert an image to a base64 string.
+        
+        Args:
+            image: PIL Image object to convert
+            
+        Returns:
+            str: Base64 encoded string representation of the image
+        """
         img_byte_arr = io.BytesIO()
         image.save(img_byte_arr, format='PNG')
         img_bytes = img_byte_arr.getvalue()
@@ -125,7 +139,17 @@ class LLMProcessing:
         custom_prompt: Optional[str] = None,
         output_dir: Optional[Union[str, Path]] = None,
     ) -> List[Document]:
-        """Process a document with LLM for OCR and chunking."""
+        """Process a document with LLM for OCR and chunking.
+        
+        Args:
+            file_path: Path to the document to process
+            chunk_strategy: Strategy for chunking ('page', 'contextual', or 'custom')
+            custom_prompt: Custom prompt to use for chunking
+            output_dir: Directory to save processed output
+            
+        Returns:
+            List[Document]: List of processed document chunks with metadata
+        """
 
         async def process_pdf():
             images = ImageProcessor.pdf_to_images(file_path)
@@ -153,7 +177,15 @@ class LLMProcessing:
         return documents
 
     async def async_process_with_llm(self, page_as_image: Image, prompt: str) -> dict:
-        """Convert image to base64 and chunk the image with LLM asynchronously."""
+        """Convert image to base64 and chunk the image with LLM asynchronously.
+        
+        Args:
+            page_as_image: PIL Image object to process
+            prompt: Prompt to use for LLM processing
+            
+        Returns:
+            dict: Processed chunks with content and metadata
+        """
         messages = self.prepare_llm_messages(page_as_image, prompt)
         try:
             response = await acompletion(
@@ -284,14 +316,12 @@ class LLMLoader(BaseLoader):
         )
 
     def load(self) -> List[Document]:
-        """
-        Load documents from either a file path or URL.
-
-        Args:
-            source: File path or URL to load documents from
-
+        """Load documents from either a file path or URL.
+        
+        Processes the document using LLM-based OCR with basic page-level chunking.
+        
         Returns:
-            List of Document objects without chunked pages
+            List[Document]: List of processed document chunks
         """
         documents = self.llm_processor.process_document_with_llm(
             self.file_path, chunk_strategy="page", output_dir=self.output_dir
@@ -299,7 +329,14 @@ class LLMLoader(BaseLoader):
         return documents
 
     def load_and_split(self, text_splitter: Optional = None) -> List[Document]:
-        """Load Documents and split into chunks using LLM-based OCR processing."""
+        """Load Documents and split into chunks using LLM-based OCR processing.
+        
+        Args:
+            text_splitter: Optional text splitter (not used in current implementation)
+            
+        Returns:
+            List[Document]: List of processed and chunked documents based on specified strategy
+        """
         documents = self.llm_processor.process_document_with_llm(
             self.file_path, self.chunk_strategy, self.custom_prompt, output_dir=self.output_dir
         )
@@ -317,7 +354,11 @@ class LLMLoader(BaseLoader):
         )
 
     def lazy_load(self) -> Iterator[Document]:
-        """Load Documents lazily, processing and yielding one page at a time."""
+        """Load Documents lazily, processing and yielding one page at a time.
+        
+        Yields:
+            Document: Processed document chunks one at a time to conserve memory
+        """
         images = ImageProcessor.pdf_to_images(self.file_path)
         prompt = self.llm_processor.get_chunk_prompt('page')
 
@@ -334,7 +375,11 @@ class LLMLoader(BaseLoader):
         save_output_file(documents, self.output_dir)
 
     async def alazy_load(self) -> AsyncIterator[Document]:
-        """Load Documents lazily and asynchronously, processing and yielding one page at a time."""
+        """Load Documents lazily and asynchronously, processing and yielding one page at a time.
+        
+        Yields:
+            Document: Processed document chunks one at a time asynchronously
+        """
         images = ImageProcessor.pdf_to_images(self.file_path)
         prompt = self.llm_processor.get_chunk_prompt('page')
 
