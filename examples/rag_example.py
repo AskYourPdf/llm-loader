@@ -9,8 +9,6 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_community.vectorstores import FAISS
 from llm_loader.document_loader import LLMLoader
-from langchain_community.document_loaders import PyMuPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.prompts import PromptTemplate
 
 # Load environment variables
@@ -66,44 +64,12 @@ def process_with_llmloader():
     return rag_chain
 
 
-def process_with_pymupdf():
-    """Process documents using PyMuPDF with recursive chunking."""
-    llm = ChatOpenAI(model="gpt-4o-mini")
-
-    # Load document with PyMuPDF
-    loader = PyMuPDFLoader("./data/test.pdf")
-    documents = loader.load()
-
-    # Create text splitter for recursive chunking
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
-        length_function=len,
-        is_separator_regex=False,
-    )
-
-    # Split documents into chunks
-    docs = text_splitter.split_documents(documents)
-
-    # Create vector store and retriever
-    vectorstore = FAISS.from_documents(documents=docs, embedding=OpenAIEmbeddings())
-    rag_chain = create_rag_chain(vectorstore.as_retriever(), llm)
-    return rag_chain
-
-
 def main():
     # Example using LLMLoader
-    print("\n=== Using LLMLoader ===")
+    print("\n=== Using LLMLoader with Contextual Chunking ===")
     llm_chain = process_with_llmloader()
     question = "What are the benefits of using o80 in reinforcement learning environments?"
     answer = llm_chain.invoke(question)
-    print(f"Question: {question}")
-    print(f"Answer: {answer}")
-
-    # Example using PyMuPDF
-    print("\n=== Using PyMuPDF ===")
-    pymupdf_chain = process_with_pymupdf()
-    answer = pymupdf_chain.invoke(question)
     print(f"Question: {question}")
     print(f"Answer: {answer}")
 
