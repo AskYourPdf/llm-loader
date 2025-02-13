@@ -12,6 +12,7 @@ from litellm import completion, validate_environment, supports_vision, check_val
 
 from llm_loader.prompts import DEFAULT_PAGE_CHUNK_PROMPT, DEFAULT_CHUNK_PROMPT
 from llm_loader.schema import OCRResponse
+from llm_loader.utils import save_output_file
 
 
 class ImageProcessor:
@@ -202,32 +203,6 @@ class LLMProcessing:
             response = completion(
                 model=self.model,
                 messages=messages,
-                response_format=OCRResponse,
-                **self.kwargs,
-            )
-
-            result = response.choices[0].message.content
-            _response = OCRResponse.parse_raw(result)
-            return _response.dict()
-
-        except Exception as e:
-            print(f"Error in LLM processing: {e}")
-            return {"chunks": [{"content": None, "page": None, "theme": None}]}
-
-    def chunk_text_with_llm(self, text: str, prompt: str) -> dict:
-        """Chunk text with LLM."""
-        try:
-            response = completion(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": prompt},
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": text},
-                        ],
-                    },
-                ],
                 response_format=OCRResponse,
                 **self.kwargs,
             )

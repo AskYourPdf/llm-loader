@@ -18,11 +18,3 @@ Images in the document should be properly discribed in details such that an LLM 
 questions about the image without seeing the image.
 The description should be returned as a part of the page content.
 """
-
-
-DEFAULT_TEXT_CHUNK_PROMPT = """
-Chunk the TEXT into sections of roughly 250 - 1500 words. Our goal is
-to identify parts of the text with same semantic theme. These chunks will
-be embedded and used in a RAG pipeline.
-
-"""

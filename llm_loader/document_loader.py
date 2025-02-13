@@ -8,7 +8,7 @@ from langchain_community.document_loaders.base import BaseLoader
 from langchain_core.documents import Document
 import requests
 
-from llm_loader.llm import ImageProcessor
+from llm_loader.llm import ImageProcessor, LLMProcessing
 from llm_loader.utils import copy_file, save_output_file, get_project_root, is_pdf
 
 
