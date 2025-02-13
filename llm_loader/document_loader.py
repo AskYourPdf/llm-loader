@@ -153,7 +153,7 @@ class LLMProcessing:
         async def process_pdf():
             images = ImageProcessor.pdf_to_images(file_path)
             prompt = self.get_chunk_prompt(chunk_strategy, custom_prompt)
-            return await asyncio.gather(*[self.async_process_with_llm(img, prompt) for img in images])
+            return await asyncio.gather(*[self.async_process_image_with_llm(img, prompt) for img in images])
 
         results = asyncio.run(process_pdf())
         documents = self.serialize_response(list(results), file_path)
@@ -170,12 +170,12 @@ class LLMProcessing:
         """Process a document with LLM for OCR and chunking asynchronously."""
         images = ImageProcessor.pdf_to_images(file_path)
         prompt = self.get_chunk_prompt(chunk_strategy, custom_prompt)
-        results = list(await asyncio.gather(*[self.async_process_with_llm(img, prompt) for img in images]))
+        results = list(await asyncio.gather(*[self.async_process_image_with_llm(img, prompt) for img in images]))
         documents = self.serialize_response(list(results), file_path)
         save_output_file(documents, output_dir)
         return documents
 
-    async def async_process_with_llm(self, page_as_image: Image, prompt: str) -> dict:
+    async def async_process_image_with_llm(self, page_as_image: Image, prompt: str) -> dict:
         """Convert image to base64 and chunk the image with LLM asynchronously.
         
         Args:
@@ -202,7 +202,7 @@ class LLMProcessing:
             print(f"Error in LLM processing: {e}")
             return {"chunks": [{"content": None, "page": None, "theme": None}]}
 
-    def process_with_llm(self, page_as_image: Image, prompt: str) -> dict:
+    def process_image_with_llm(self, page_as_image: Image, prompt: str) -> dict:
         """Convert image to base64 and chunk the image with LLM."""
         messages = self.prepare_llm_messages(page_as_image, prompt)
         try:
@@ -363,7 +363,7 @@ class LLMLoader(BaseLoader):
 
         documents = []
         for page_num, image in enumerate(images):
-            result = self.llm_processor.process_with_llm(image, prompt)
+            result = self.llm_processor.process_image_with_llm(image, prompt)
             for chunk in result['chunks']:
                 if chunk.get('content') is None:
                     continue
@@ -384,7 +384,7 @@ class LLMLoader(BaseLoader):
 
         documents = []
         for page_num, image in enumerate(images):
-            result = await self.llm_processor.async_process_with_llm(image, prompt)
+            result = await self.llm_processor.async_process_image_with_llm(image, prompt)
             for chunk in result['chunks']:
                 if chunk.get('content') is None:
                     continue
