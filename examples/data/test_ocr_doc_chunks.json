@@ -1,0 +1,34 @@
+[
+  {
+    "content": "Invoice no: 27301261\nDate of issue: 10/09/2012\nSeller: Williams LLC\n72074 Taylor Plains Suite 342\nWest Alexandria, AR 97978\nTax Id: 922-88-2832\nIBAN: GB70FTNR64199348221780",
+    "metadata": {
+      "page": 0,
+      "semantic_theme": "invoice_header",
+      "source": "data/test_ocr_doc.pdf"
+    }
+  },
+  {
+    "content": "Client: Hernandez-Anderson\n084 Carter Lane Apt. 846\nSouth Ronaldbury, AZ 91030\nTax Id: 959-74-5868",
+    "metadata": {
+      "page": 0,
+      "semantic_theme": "invoice_client",
+      "source": "data/test_ocr_doc.pdf"
+    }
+  },
+  {
+    "content": "| No. | Description | Qty | UM | Net price | Net worth | VAT [%] | Gross worth |\n|---|---|---|---|---|---|---|---|\n| 1. | Lilly Pulitzer dress Size 2 | 5.00 | each | 45.00 | 225,00 | 10% | 247,50 |\n| 2. | New ERIN Erin Fertherston Straight Dress White Sequence Lining Sleeveless SZ 10 | 1,00 | each | 59,99 | 59,99 | 10% | 65,99 |\n| 3. | Sequence dress Size Small | 3,00 | each | 35,00 | 105,00 | 10% | 115,50 |\n| 4. | fire los angeles dress Medium | 3.00 | each | 6,50 | 19,50 | 10% | 21,45 |\n| 5. | Eileen Fisher Women's Long Sleeve Fleece Lined Front Pockets Dress XS Gray | 3,00 | each | 15,99 | 47,97 | 10% | 52,77 |\n| 6. | Lularoe Nicole Dress Size Small Light Solid Grey/White Ringer Tee Trim | 2,00 | each | 3,75 | 7,50 | 10% | 8,25 |\n| 7. | J.Crew Collection Black & White sweater Dress sz S | 1,00 | each | 30,00 | 30,00 | 10% | 33,00 |",
+    "metadata": {
+      "page": 0,
+      "semantic_theme": "invoice_items",
+      "source": "data/test_ocr_doc.pdf"
+    }
+  },
+  {
+    "content": "| VAT [%] | Net worth | VAT | Gross worth |\n|---|---|---|---| \n| 10% | 494,96 | 49,50 | 544,46 |\n| Total | $ 494,96 | $ 49,50 | $ 544,46 |",
+    "metadata": {
+      "page": 0,
+      "semantic_theme": "invoice_summary",
+      "source": "data/test_ocr_doc.pdf"
+    }
+  }
+]

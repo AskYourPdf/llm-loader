@@ -3,7 +3,9 @@ Example usage of different document loaders (llm_loader and PyMuPDF) for RAG app
 """
 import os
 from dotenv import load_dotenv
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.chat_models import ChatOpenAI
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -18,7 +20,7 @@ load_dotenv()
 os.environ["OPENAI_API_KEY"] = "YOUR_OPENAI_API_KEY"
 
 # Gemini API key since we are using the gemini flash model
-os.environ["GEMINI_API_KEY"] = "YOUR_GEMINI_API_KEY"
+os.environ["GEMINI_API_KEY"] = "YOUR_GEMINI"
 
 
 def create_rag_chain(retriever, llm):
@@ -51,11 +53,9 @@ def process_with_llmloader():
 
     # Initialize the loader from the llm_loader package
     loader = LLMLoader(
-        file_path="./data/test.pdf",
+        file_path="./data/test_ocr_doc.pdf",
         chunk_strategy="contextual",
         model="gemini/gemini-1.5-flash",
-        save_output=True,
-        output_dir="./data",
     )
 
     docs = loader.load_and_split()
@@ -64,12 +64,41 @@ def process_with_llmloader():
     return rag_chain
 
 
+def process_with_pymupdf():
+    """Process documents using PyMuPDF with recursive chunking."""
+    llm = ChatOpenAI(model="gpt-4o-mini")
+
+    # Load document with PyMuPDF
+    loader = PyMuPDFLoader("./data/test_ocr_doc.pdf")
+    documents = loader.load()
+
+    # Create text splitter for recursive chunking
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len,
+        is_separator_regex=False,
+    )
+
+    docs = text_splitter.split_documents(documents)
+    vectorstore = FAISS.from_documents(documents=docs, embedding=OpenAIEmbeddings())
+    rag_chain = create_rag_chain(vectorstore.as_retriever(), llm)
+    return rag_chain
+
+
 def main():
     # Example using LLMLoader
-    print("\n=== Using LLMLoader with Contextual Chunking ===")
+    print("\n=== Using LLMLoader ===")
     llm_chain = process_with_llmloader()
-    question = "What are the benefits of using o80 in reinforcement learning environments?"
+    question = "What is the total gross worth for item 1 and item 7?"
     answer = llm_chain.invoke(question)
+    print(f"Question: {question}")
+    print(f"Answer: {answer}")
+
+    # Example using PyMuPDF
+    print("\n=== Using PyMuPDF ===")
+    pymupdf_chain = process_with_pymupdf()
+    answer = pymupdf_chain.invoke(question)
     print(f"Question: {question}")
     print(f"Answer: {answer}")
 

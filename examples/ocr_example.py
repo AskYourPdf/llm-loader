@@ -3,16 +3,17 @@ Example usage of different document loaders (llm_loader and PyMuPDF) for RAG app
 """
 import os
 from dotenv import load_dotenv
+
 from llm_loader.document_loader import LLMLoader
 
 # Load environment variables
 load_dotenv()
 
 # OpenAI API key since we are using the gpt-4o-mini model for question-answering
-os.environ["OPENAI_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = "YOUR_OPENAI_API_KEY"
 
 # Gemini API key since we are using the gemini flash model
-os.environ["GEMINI_API_KEY"] = ""
+os.environ["GEMINI_API_KEY"] = "YOUR_GEMINI"
 
 
 def process_with_llmloader():
@@ -28,6 +29,31 @@ def process_with_llmloader():
     )
 
     docs = loader.load_and_split()
+    return docs
+
+
+def process_with_pymupdf():
+    """Process documents using PyMuPDF loader."""
+    import json
+    from langchain_community.document_loaders import PyMuPDFLoader
+    
+    # Initialize the PyMuPDF loader
+    loader = PyMuPDFLoader("./data/test_ocr_doc.pdf")
+    docs = loader.load()
+
+    output_data = []
+    for doc in docs:
+        output_data.append({
+            "page": doc.metadata["page"],
+            "content": doc.page_content,
+            "metadata": doc.metadata
+        })
+    
+    # Save as JSON
+    output_path = "data/pymupdf_output.json"
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(output_data, f, indent=2, ensure_ascii=False)
+    
     return docs
 
 
