@@ -88,15 +88,19 @@ class LLMLoader(BaseLoader):
 ```
 
 ## Comparison with Traditional Methods
-In this example we will compare the performance of LLMLoader with a traditional method which uses PyMuPDF loader. 
 
-### Input document
+Let's see LLMLoader in action! We'll compare it with PyMuPDF (a popular traditional document loader) to demonstrate why LLMLoader's intelligent chunking makes such a difference in real-world applications.
 
-![Input document](./data/test_ocr_doc.png)
+### The Challenge: Processing an Invoice
+We'll process this sample invoice that includes headers, tables, and complex formatting:
 
+![Sample Invoice Document](./data/test_ocr_doc.png)
 
-### Chunked Output using LLMLoader
-> **Note:** The following outputs have been formatted for better readability.
+### Head-to-Head Comparison
+
+#### 1. LLMLoader Output
+LLMLoader intelligently breaks down the document into semantic chunks, preserving structure and meaning (note that the json output below has been formatted for readability):
+
 ```json
 [
   {
@@ -156,7 +160,14 @@ In this example we will compare the performance of LLMLoader with a traditional 
 ]
 ```
 
-### Chunked Output using PyMuPDF
+**Key Benefits:**
+- ✨ Clean, structured chunks
+- 🎯 Semantic understanding
+- 📊 Preserved table formatting
+- 🏷️ Intelligent metadata tagging
+
+#### 2. Traditional PyMuPDF Output
+PyMuPDF provides a basic text extraction without semantic understanding:
 
 ```json
 [
@@ -192,39 +203,31 @@ In this example we will compare the performance of LLMLoader with a traditional 
   }
 ]
 ```
-From the output above, we can see that the LLMLoader has done a better job at chunking the document. It has correctly identified the semantic themes of the document and has chunked the document accordingly. It has also maintained the structures of the tables in the document.
 
-### RAG Example
-Now we will embed the outputs above from LLMLoader and PyMuPDF and use it for RAG in a Question Answering System. 
-For detailed examples and use cases, please visit our [examples](./examples) directory. The code below is taken from the [rag_example.py](./examples/rag_example.py) file. You can find the complete example there.
+### Real-World Impact: RAG Performance
 
+Let's see how this difference affects a real Question-Answering system:
 
 ```python
-from examples.rag_example import process_with_llmloader
-from examples.rag_example import process_with_pymupdf
-
-print("\n=== Using LLMLoader ===")
-llm_chain = process_with_llmloader()
 question = "What is the total gross worth for item 1 and item 7?"
-answer = llm_chain.invoke(question)
-print(f"Question: {question}")
-print(f"Answer: {answer}")
 
-# === Using LLMLoader  ===
-# Question: What is the total gross worth for item 1 and item 7?
-# Answer: The total gross worth for item 1 (Lilly Pulitzer dress) is $247.50 and for item 7 (J.Crew Collection sweater dress) is $33.00. Therefore, the total gross worth for both items is $280.50.
+# LLMLoader Result ✅
+"The total gross worth for item 1 (Lilly Pulitzer dress) is $247.50 and for item 7 
+(J.Crew Collection sweater dress) is $33.00. 
+Total: $280.50"
 
-print("\n=== Using PyMuPDF ===")
-pymupdf_chain = process_with_pymupdf()
-answer = pymupdf_chain.invoke(question)
-print(f"Question: {question}")
-print(f"Answer: {answer}")
-
-# === Using PyMuPDF ===
-# Question: What is the total gross worth for item 1 and item 7?
-# Answer: The total gross worth for item 1 is $45.00, and for item 7 it is $33.00. Therefore, the combined total gross worth for item 1 and item 7 is $78.00.
+# PyMuPDF Result ❌
+"The total gross worth for item 1 is $45.00, and for item 7 it is $33.00. 
+Total: $78.00"
 ```
-From the results above, we can see that LLMLoader has answered the question correctly while PyMuPDF has not. You can find and run the complete example in the [rag_example.py](./examples/rag_example.py) file.
+
+**Why LLMLoader Won:**
+- 🎯 Maintained table structure
+- 💡 Preserved relationships between data
+- 📊 Accurate calculations
+- 🤖 Better context for the LLM
+
+You can try it yourself by running the complete [RAG example](./examples/rag_example.py) to see the difference in action!
 
 ## License
 
