@@ -94,7 +94,7 @@ Let's see LLMLoader in action! We'll compare it with PyMuPDF (a popular traditio
 ### The Challenge: Processing an Invoice
 We'll process this sample invoice that includes headers, tables, and complex formatting:
 
-![Sample Invoice Document](https://raw.githubusercontent.com/AskYourPdf/llm-loader/refs/heads/master/examples/data/test_ocr_doc.png)
+![Sample Invoice Document](https://raw.githubusercontent.com/AskYourPdf/llm-loader/refs/heads/master/examples/data/test_ocr_doc.png?height=200)
 
 ### Head-to-Head Comparison
 
