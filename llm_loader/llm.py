@@ -194,7 +194,7 @@ class LLMProcessing:
 
         except Exception as e:
             print(f"Error in LLM processing: {e}")
-            return {"chunks": [{"content": None, "page": None, "theme": None}]}
+            return {"markdown_chunks": [{"content": None, "page": None, "theme": None}]}
 
     def process_image_with_llm(self, page_as_image: Image, prompt: str) -> dict:
         """Convert image to base64 and chunk the image with LLM."""
@@ -213,4 +213,4 @@ class LLMProcessing:
 
         except Exception as e:
             print(f"Error in LLM processing: {e}")
-            return {"chunks": [{"content": None, "page": None, "theme": None}]}
+            return {"markdown_chunks": [{"content": None, "page": None, "theme": None}]}
