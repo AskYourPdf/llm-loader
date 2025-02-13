@@ -26,7 +26,7 @@ def get_project_root() -> Path:
 
 def save_output_file(documents: List[Document], output_dir: Path) -> None:
     """Save the chunks and input file to a folder."""
-    if not output_dir:
+    if not output_dir or not documents:
         return
 
     if not output_dir.is_absolute():
@@ -41,7 +41,10 @@ def save_output_file(documents: List[Document], output_dir: Path) -> None:
         for doc in documents
     ]
 
-    chunks_file = output_dir / f"{output_dir.stem}_chunks.json"
+    identifier = documents[0].metadata.get("source") or output_dir.stem
+    identifier = Path(identifier).name.rsplit('.', 1)[0]
+    
+    chunks_file = output_dir / f"{identifier}_chunks.json"
     with open(chunks_file, "w", encoding="utf-8") as f:
         json.dump(chunks_data, f, indent=2, ensure_ascii=False)
 
