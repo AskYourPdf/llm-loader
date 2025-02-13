@@ -154,7 +154,7 @@ class LLMLoader(BaseLoader):
         documents = []
         for page_num, image in enumerate(images):
             result = self.llm_processor.process_image_with_llm(image, prompt)
-            for chunk in result['chunks']:
+            for chunk in result['markdown_chunks']:
                 if chunk.get('content') is None:
                     continue
                 doc = self._create_document(chunk, page_num)
@@ -175,7 +175,7 @@ class LLMLoader(BaseLoader):
         documents = []
         for page_num, image in enumerate(images):
             result = await self.llm_processor.async_process_image_with_llm(image, prompt)
-            for chunk in result['chunks']:
+            for chunk in result['markdown_chunks']:
                 if chunk.get('content') is None:
                     continue
                 doc = self._create_document(chunk, page_num)

@@ -9,4 +9,4 @@ class Chunk(BaseModel):
 
 
 class OCRResponse(BaseModel):
-    chunks: List[Chunk]
+    markdown_chunks: List[Chunk]

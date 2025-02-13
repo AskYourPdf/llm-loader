@@ -1,4 +1,5 @@
-DEFAULT_CHUNK_PROMPT = """OCR the following page into Markdown format.
+DEFAULT_CHUNK_PROMPT = """OCR the following page into Markdown format. 
+- Tables must be formatted in Markdown.
 - Do not exclude any content from the page.
 - Chunk the markdown into sections of roughly 250 - 1500 words with same semantic theme.
 - Our goal is to identify parts of the page with same semantic theme. These chunks will

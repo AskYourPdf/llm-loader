@@ -109,7 +109,7 @@ class LLMProcessing:
     def serialize_response(results: List[dict], file_path: Optional[Union[str, Path]] = None) -> List[Document]:
         documents = []
         for page_num, result in enumerate(results):
-            for chunk in result['chunks']:
+            for chunk in result['markdown_chunks']:
                 if chunk.get('theme') is None and chunk.get('content') is None:
                     continue
 
