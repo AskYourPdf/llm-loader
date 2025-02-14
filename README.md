@@ -98,7 +98,7 @@ class LLMLoader(BaseLoader):
             self,
             file_path: Optional[Union[str, Path]] = None, # path to the document to load
             url: Optional[str] = None, # url to the document to load
-            chunk_strategy: str = 'page', # chunking strategy to use (page, contextual, custom)
+            chunk_strategy: str = 'contextual', # chunking strategy to use (page, contextual, custom)
             custom_prompt: Optional[str] = None, # custom prompt to use
             model: str = "gemini/gemini-2.0-flash", # LLM model to use
             save_output: bool = False, # whether to save the output to a file

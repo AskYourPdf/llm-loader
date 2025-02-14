@@ -20,7 +20,7 @@ class LLMLoader(BaseLoader):
             self,
             file_path: Optional[Union[str, Path]] = None,
             url: Optional[str] = None,
-            chunk_strategy: str = 'page',
+            chunk_strategy: str = 'contextual',
             custom_prompt: Optional[str] = None,
             model: str = "gemini/gemini-2.0-flash",
             save_output: bool = False,
