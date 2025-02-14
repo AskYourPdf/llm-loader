@@ -28,9 +28,21 @@ python-dotenv = "^1.0.0"
 pypdf = "^3.17.1"
 faiss-cpu = "^1.7.4"
 tiktoken = "^0.8.0"
-litellm = "^1.60.8"
+litellm = "^1.61.3"
 pdf2image = "^1.17.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.23.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=llm_loader --cov-report=term-missing"
+asyncio_mode = "auto"

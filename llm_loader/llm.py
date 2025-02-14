@@ -189,8 +189,8 @@ class LLMProcessing:
             )
 
             result = response.choices[0].message.content
-            _response = OCRResponse.parse_raw(result)
-            return _response.dict()
+            _response = OCRResponse.model_validate_json(result)
+            return _response.model_dump()
 
         except Exception as e:
             print(f"Error in LLM processing: {e}")
@@ -208,8 +208,8 @@ class LLMProcessing:
             )
 
             result = response.choices[0].message.content
-            _response = OCRResponse.parse_raw(result)
-            return _response.dict()
+            _response = OCRResponse.model_validate_json(result)
+            return _response.model_dump()
 
         except Exception as e:
             print(f"Error in LLM processing: {e}")
