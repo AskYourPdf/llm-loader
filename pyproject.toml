@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smart-llm-loader"
-version = "0.1.0"
+version = "0.1.1"
 description = "A powerful PDF processing toolkit that seamlessly integrates with LLMs for intelligent document chunking and RAG applications. Features smart context-aware segmentation, multi-LLM support, and optimized content extraction for enhanced RAG performance."
 authors = ["drmingler <davidemmanuel75@gmail.com>"]
 readme = "README.md"
