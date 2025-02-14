@@ -34,6 +34,3 @@ pdf2image = "^1.17.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-pre-install = "llm_loader.script.install_dependencies:install_poppler"

@@ -24,6 +24,27 @@ LLMLoader's chunking approach has been benchmarked against traditional methods, 
 
 ## Installation
 
+### System Dependencies
+
+First, install Poppler if you don't have it already (required for PDF processing):
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install poppler-utils
+```
+
+**macOS:**
+```bash
+brew install poppler
+```
+
+**Windows:**
+1. Download the latest [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases/)
+2. Extract the downloaded file
+3. Add the `bin` directory to your system PATH
+
+### Package Installation
+
 You can install LLMLoader using pip:
 
 ```bash
