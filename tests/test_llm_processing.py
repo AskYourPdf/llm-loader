@@ -3,16 +3,16 @@ from PIL import Image
 from langchain_core.documents import Document
 from unittest.mock import Mock
 
-from llm_loader.llm import LLMProcessing
-from llm_loader.prompts import DEFAULT_PAGE_CHUNK_PROMPT, DEFAULT_CHUNK_PROMPT
+from smart_llm_loader.llm import LLMProcessing
+from smart_llm_loader.prompts import DEFAULT_PAGE_CHUNK_PROMPT, DEFAULT_CHUNK_PROMPT
 
 
 @pytest.fixture
 def llm_processor(mocker):
     # Mock all validation functions
-    mocker.patch('llm_loader.llm.validate_environment', return_value={"keys_in_environment": True})
-    mocker.patch('llm_loader.llm.supports_vision', return_value=True)
-    mocker.patch('llm_loader.llm.check_valid_key', return_value=True)
+    mocker.patch('smart_llm_loader.llm.validate_environment', return_value={"keys_in_environment": True})
+    mocker.patch('smart_llm_loader.llm.supports_vision', return_value=True)
+    mocker.patch('smart_llm_loader.llm.check_valid_key', return_value=True)
     return LLMProcessing(model="gemini/gemini-2.0-flash")
 
 
@@ -23,24 +23,24 @@ def sample_image():
 
 def test_validate_model_valid(mocker):
     # Mock the validation functions
-    mocker.patch('llm_loader.llm.validate_environment', return_value={"keys_in_environment": True})
-    mocker.patch('llm_loader.llm.supports_vision', return_value=True)
-    mocker.patch('llm_loader.llm.check_valid_key', return_value=True)
+    mocker.patch('smart_llm_loader.llm.validate_environment', return_value={"keys_in_environment": True})
+    mocker.patch('smart_llm_loader.llm.supports_vision', return_value=True)
+    mocker.patch('smart_llm_loader.llm.check_valid_key', return_value=True)
 
     # Should not raise any exceptions
     LLMProcessing(model="gemini/gemini-2.0-flash")
 
 
 def test_validate_model_missing_env_vars(mocker):
-    mocker.patch('llm_loader.llm.validate_environment', return_value={"keys_in_environment": False})
+    mocker.patch('smart_llm_loader.llm.validate_environment', return_value={"keys_in_environment": False})
 
     with pytest.raises(ValueError, match="Missing environment variables"):
         LLMProcessing(model="gemini/gemini-2.0-flash")
 
 
 def test_validate_model_unsupported_vision(mocker):
-    mocker.patch('llm_loader.llm.validate_environment', return_value={"keys_in_environment": True})
-    mocker.patch('llm_loader.llm.supports_vision', return_value=False)
+    mocker.patch('smart_llm_loader.llm.validate_environment', return_value={"keys_in_environment": True})
+    mocker.patch('smart_llm_loader.llm.supports_vision', return_value=False)
 
     with pytest.raises(ValueError, match="not a supported vision model"):
         LLMProcessing(model="unsupported-model")
@@ -116,7 +116,7 @@ async def test_async_process_image_with_llm_success(llm_processor, sample_image,
             )
         )
     ]
-    mocker.patch('llm_loader.llm.acompletion', return_value=mock_response)
+    mocker.patch('smart_llm_loader.llm.acompletion', return_value=mock_response)
 
     result = await llm_processor.async_process_image_with_llm(sample_image, "Test prompt")
 
@@ -127,7 +127,7 @@ async def test_async_process_image_with_llm_success(llm_processor, sample_image,
 
 @pytest.mark.asyncio
 async def test_async_process_image_with_llm_error(llm_processor, sample_image, mocker):
-    mocker.patch('llm_loader.llm.acompletion', side_effect=Exception("Test error"))
+    mocker.patch('smart_llm_loader.llm.acompletion', side_effect=Exception("Test error"))
 
     result = await llm_processor.async_process_image_with_llm(sample_image, "Test prompt")
 

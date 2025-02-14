@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "llm-loader"
+name = "smart-llm-loader"
 version = "0.1.0"
 description = "A powerful PDF processing toolkit that seamlessly integrates with LLMs for intelligent document chunking and RAG applications. Features smart context-aware segmentation, multi-LLM support, and optimized content extraction for enhanced RAG performance."
 authors = ["drmingler <davidemmanuel75@gmail.com>"]
 readme = "README.md"
-packages = [{include = "llm_loader"}]
+packages = [{include = "smart_llm_loader"}]
 license = "MIT"
-repository = "https://github.com/drmingler/llm-loader"
+repository = "https://github.com/drmingler/smart-llm-loader"
 keywords = ["pdf", "llm", "rag", "document-processing", "ai"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -44,5 +44,5 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=llm_loader --cov-report=term-missing"
+addopts = "-v --cov=smart_llm_loader --cov-report=term-missing"
 asyncio_mode = "auto"

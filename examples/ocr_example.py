@@ -1,10 +1,10 @@
 """
-Example usage of different document loaders (llm_loader and PyMuPDF) for RAG applications.
+Example usage of different document loaders (smart-llm-loader and PyMuPDF) for RAG applications.
 """
 import os
 from dotenv import load_dotenv
 
-from llm_loader.document_loader import LLMLoader
+from smart_llm_loader import SmartLLMLoader
 
 # Load environment variables
 load_dotenv()
@@ -13,14 +13,14 @@ load_dotenv()
 os.environ["OPENAI_API_KEY"] = "YOUR_OPENAI_API_KEY"
 
 # Gemini API key since we are using the gemini flash model
-os.environ["GEMINI_API_KEY"] = "YOUR_GEMINI"
+os.environ["GEMINI_API_KEY"] = "YOUR_GEMINI_API_KEY"
 
 
 def process_with_llmloader():
-    """Process documents using LLMLoader with Gemini Flash."""
+    """Process documents using SmartLLMLoader with Gemini Flash."""
 
-    # Initialize the loader from the llm_loader package
-    loader = LLMLoader(
+    # Initialize the loader from the smart-llm-loader package
+    loader = SmartLLMLoader(
         file_path="./data/test_ocr_doc.pdf",
         chunk_strategy="contextual",
         model="gemini/gemini-1.5-flash",

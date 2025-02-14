@@ -38,6 +38,6 @@ def _check_poppler_installation():
 _check_poppler_installation()
 
 # Import main package components
-from .document_loader import LLMLoader
+from .document_loader import SmartLLMLoader
 
 __version__ = "0.1.0"

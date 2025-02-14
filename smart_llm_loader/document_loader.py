@@ -9,11 +9,11 @@ from langchain_community.document_loaders.base import BaseLoader
 from langchain_core.documents import Document
 import requests
 
-from llm_loader.llm import ImageProcessor, LLMProcessing
-from llm_loader.utils import copy_file, save_output_file, is_pdf
+from smart_llm_loader.llm import ImageProcessor, LLMProcessing
+from smart_llm_loader.utils import copy_file, save_output_file, is_pdf
 
 
-class LLMLoader(BaseLoader):
+class SmartLLMLoader(BaseLoader):
     """A flexible document loader that supports multiple input types."""
 
     def __init__(

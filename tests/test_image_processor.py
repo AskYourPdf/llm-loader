@@ -3,7 +3,7 @@ from PIL import Image
 import io
 import base64
 
-from llm_loader.llm import ImageProcessor
+from smart_llm_loader.llm import ImageProcessor
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def sample_image():
 def test_pdf_to_images(sample_pdf_path, mocker):
     # Mock pdf2image.convert_from_path
     mock_images = [Image.new('RGB', (100, 100)) for _ in range(2)]
-    mocker.patch('llm_loader.llm.convert_from_path', return_value=mock_images)
+    mocker.patch('smart_llm_loader.llm.convert_from_path', return_value=mock_images)
 
     images = ImageProcessor.pdf_to_images(sample_pdf_path)
 

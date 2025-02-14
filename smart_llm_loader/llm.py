@@ -10,9 +10,9 @@ from langchain_core.documents import Document
 from pdf2image import convert_from_path
 from litellm import completion, validate_environment, supports_vision, check_valid_key, acompletion
 
-from llm_loader.prompts import DEFAULT_PAGE_CHUNK_PROMPT, DEFAULT_CHUNK_PROMPT
-from llm_loader.schema import OCRResponse
-from llm_loader.utils import save_output_file
+from smart_llm_loader.prompts import DEFAULT_PAGE_CHUNK_PROMPT, DEFAULT_CHUNK_PROMPT
+from smart_llm_loader.schema import OCRResponse
+from smart_llm_loader.utils import save_output_file
 
 
 class ImageProcessor:

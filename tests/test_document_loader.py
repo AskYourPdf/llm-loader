@@ -4,15 +4,15 @@ import tempfile
 from unittest.mock import Mock
 from langchain_core.documents import Document
 
-from llm_loader.document_loader import LLMLoader
+from smart_llm_loader.document_loader import SmartLLMLoader
 
 
 @pytest.fixture(autouse=True)
 def mock_llm_validation(mocker):
     """Mock LLM validation for all tests."""
-    mocker.patch('llm_loader.llm.validate_environment', return_value={"keys_in_environment": True})
-    mocker.patch('llm_loader.llm.supports_vision', return_value=True)
-    mocker.patch('llm_loader.llm.check_valid_key', return_value=True)
+    mocker.patch('smart_llm_loader.llm.validate_environment', return_value={"keys_in_environment": True})
+    mocker.patch('smart_llm_loader.llm.supports_vision', return_value=True)
+    mocker.patch('smart_llm_loader.llm.check_valid_key', return_value=True)
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def mock_response():
 
 
 def test_init_with_file_path(sample_pdf_path):
-    loader = LLMLoader(file_path=sample_pdf_path)
+    loader = SmartLLMLoader(file_path=sample_pdf_path)
     assert str(loader.file_path) == str(sample_pdf_path)
     assert loader.output_dir is None
 
@@ -42,23 +42,23 @@ def test_init_with_url(mocker, mock_response):
 
     with tempfile.NamedTemporaryFile(suffix='.pdf') as temp_file:
         mocker.patch('tempfile.NamedTemporaryFile', return_value=temp_file)
-        loader = LLMLoader(url=url)
+        loader = SmartLLMLoader(url=url)
         assert isinstance(loader.file_path, Path)
 
 
 def test_init_with_both_file_and_url(sample_pdf_path):
     with pytest.raises(ValueError, match=r"Only one of file_path or url should be provided\."):
-        LLMLoader(file_path=sample_pdf_path, url="http://example.com/test.pdf")
+        SmartLLMLoader(file_path=sample_pdf_path, url="http://example.com/test.pdf")
 
 
 def test_init_with_neither_file_nor_url():
     with pytest.raises(ValueError, match=r"Either file_path or url must be provided\."):
-        LLMLoader()
+        SmartLLMLoader()
 
 
 def test_load_from_path_with_output_dir(sample_pdf_path, tmp_path):
     output_dir = tmp_path / "output"
-    loader = LLMLoader(file_path=sample_pdf_path, save_output=True, output_dir=output_dir)
+    loader = SmartLLMLoader(file_path=sample_pdf_path, save_output=True, output_dir=output_dir)
 
     assert loader.output_dir == output_dir
     assert (output_dir / sample_pdf_path.name).exists()
@@ -72,14 +72,14 @@ def test_load_from_url_invalid_content(mocker):
     mocker.patch('requests.get', return_value=mock_resp)
 
     with pytest.raises(ValueError, match=r"The URL does not point to a PDF file\."):
-        LLMLoader(url=url)
+        SmartLLMLoader(url=url)
 
 
 def test_load_method(mocker, sample_pdf_path):
     mock_documents = [Document(page_content="Test content")]
-    mocker.patch('llm_loader.llm.LLMProcessing.process_document_with_llm', return_value=mock_documents)
+    mocker.patch('smart_llm_loader.llm.LLMProcessing.process_document_with_llm', return_value=mock_documents)
 
-    loader = LLMLoader(file_path=sample_pdf_path)
+    loader = SmartLLMLoader(file_path=sample_pdf_path)
     documents = loader.load()
 
     assert len(documents) == 1
@@ -89,9 +89,9 @@ def test_load_method(mocker, sample_pdf_path):
 @pytest.mark.asyncio
 async def test_aload_method(mocker, sample_pdf_path):
     mock_documents = [Document(page_content="Test content")]
-    mocker.patch('llm_loader.llm.LLMProcessing.async_process_document_with_llm', return_value=mock_documents)
+    mocker.patch('smart_llm_loader.llm.LLMProcessing.async_process_document_with_llm', return_value=mock_documents)
 
-    loader = LLMLoader(file_path=sample_pdf_path)
+    loader = SmartLLMLoader(file_path=sample_pdf_path)
     documents = await loader.aload()
 
     assert len(documents) == 1
@@ -100,9 +100,9 @@ async def test_aload_method(mocker, sample_pdf_path):
 
 def test_load_and_split_method(mocker, sample_pdf_path):
     mock_documents = [Document(page_content="Test content")]
-    mocker.patch('llm_loader.llm.LLMProcessing.process_document_with_llm', return_value=mock_documents)
+    mocker.patch('smart_llm_loader.llm.LLMProcessing.process_document_with_llm', return_value=mock_documents)
 
-    loader = LLMLoader(file_path=sample_pdf_path, chunk_strategy="contextual")
+    loader = SmartLLMLoader(file_path=sample_pdf_path, chunk_strategy="contextual")
     documents = loader.load_and_split()
 
     assert len(documents) == 1
@@ -110,7 +110,7 @@ def test_load_and_split_method(mocker, sample_pdf_path):
 
 
 def test_create_document(sample_pdf_path):
-    loader = LLMLoader(file_path=sample_pdf_path)
+    loader = SmartLLMLoader(file_path=sample_pdf_path)
     chunk = {"content": "Test content", "theme": "Test theme"}
     page_num = 1
 
@@ -128,10 +128,10 @@ def test_lazy_load(mocker, sample_pdf_path):
     mock_images = [Mock()]
     mock_result = {"markdown_chunks": [{"content": "Test content", "theme": "Test theme"}]}
 
-    mocker.patch('llm_loader.llm.ImageProcessor.pdf_to_images', return_value=mock_images)
-    mocker.patch('llm_loader.llm.LLMProcessing.process_image_with_llm', return_value=mock_result)
+    mocker.patch('smart_llm_loader.llm.ImageProcessor.pdf_to_images', return_value=mock_images)
+    mocker.patch('smart_llm_loader.llm.LLMProcessing.process_image_with_llm', return_value=mock_result)
 
-    loader = LLMLoader(file_path=sample_pdf_path)
+    loader = SmartLLMLoader(file_path=sample_pdf_path)
     documents = list(loader.lazy_load())
 
     assert len(documents) == 1
@@ -145,10 +145,10 @@ async def test_alazy_load(mocker, sample_pdf_path):
     mock_images = [Mock()]
     mock_result = {"markdown_chunks": [{"content": "Test content", "theme": "Test theme"}]}
 
-    mocker.patch('llm_loader.llm.ImageProcessor.pdf_to_images', return_value=mock_images)
-    mocker.patch('llm_loader.llm.LLMProcessing.async_process_image_with_llm', return_value=mock_result)
+    mocker.patch('smart_llm_loader.llm.ImageProcessor.pdf_to_images', return_value=mock_images)
+    mocker.patch('smart_llm_loader.llm.LLMProcessing.async_process_image_with_llm', return_value=mock_result)
 
-    loader = LLMLoader(file_path=sample_pdf_path)
+    loader = SmartLLMLoader(file_path=sample_pdf_path)
     documents = [doc async for doc in loader.alazy_load()]
 
     assert len(documents) == 1
