@@ -1,6 +1,6 @@
 # LLMLoader
 
-llm_loader is a lightweight yet powerful Python package that transforms any document into LLM-ready chunks. It handles the entire document processing pipeline:
+llm-loader is a lightweight yet powerful Python package that transforms any document into LLM-ready chunks. It handles the entire document processing pipeline:
 
 - 📄 Converts documents to clean markdown
 - 🔍 Built-in OCR for scanned documents and images
