@@ -15,22 +15,10 @@ def is_pdf(url: str, response: requests.Response) -> bool:
     ]
 
 
-def get_project_root() -> Path:
-    """Get the project root directory."""
-    current_file = Path(__file__).resolve()
-    for parent in [current_file, *current_file.parents]:
-        if any((parent / f).exists() for f in ['pyproject.toml', 'setup.py', '.git', 'requirements.txt', 'README.md']):
-            return parent
-    return Path.cwd()
-
-
 def save_output_file(documents: List[Document], output_dir: Path) -> None:
     """Save the chunks and input file to a folder."""
     if not output_dir or not documents:
         return
-
-    if not output_dir.is_absolute():
-        output_dir = get_project_root() / output_dir
 
     output_dir.mkdir(exist_ok=True)
     chunks_data = [
@@ -43,7 +31,7 @@ def save_output_file(documents: List[Document], output_dir: Path) -> None:
 
     identifier = documents[0].metadata.get("source") or output_dir.stem
     identifier = Path(identifier).name.rsplit('.', 1)[0]
-    
+
     chunks_file = output_dir / f"{identifier}_chunks.json"
     with open(chunks_file, "w", encoding="utf-8") as f:
         json.dump(chunks_data, f, indent=2, ensure_ascii=False)

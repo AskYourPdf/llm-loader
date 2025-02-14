@@ -1,6 +1,7 @@
 """
 Document loader module for handling different types of inputs (files and URLs).
 """
+import os
 from pathlib import Path
 import tempfile
 from typing import AsyncIterator, List, Optional, Iterator, Tuple, Union
@@ -9,7 +10,7 @@ from langchain_core.documents import Document
 import requests
 
 from llm_loader.llm import ImageProcessor, LLMProcessing
-from llm_loader.utils import copy_file, save_output_file, get_project_root, is_pdf
+from llm_loader.utils import copy_file, save_output_file, is_pdf
 
 
 class LLMLoader(BaseLoader):
@@ -65,7 +66,7 @@ class LLMLoader(BaseLoader):
             raise FileNotFoundError(f"File not found: {file_path}")
 
         if save_output or output_dir:
-            output_dir = Path(output_dir) if output_dir else get_project_root() / file_path.stem
+            output_dir = Path(output_dir) if output_dir else Path(f"{os.getcwd()}/{file_path.stem}")
             output_dir.mkdir(parents=True, exist_ok=True)
             output_file = output_dir / file_path.name
             copy_file(file_path, output_file)
@@ -89,7 +90,7 @@ class LLMLoader(BaseLoader):
             if save_output or output_dir:
                 url_filename = url.split('/')[-1] or 'output'
                 url_filename = url_filename if ".pdf" in url_filename else url_filename + ".pdf"
-                output_dir = Path(output_dir) if output_dir else get_project_root() / Path(url_filename).stem
+                output_dir = Path(output_dir) if output_dir else Path(f"{os.getcwd()}/{Path(url_filename).stem}")
                 output_dir.mkdir(parents=True, exist_ok=True)
                 output_file = output_dir / url_filename
                 copy_file(temp_path, output_file)
